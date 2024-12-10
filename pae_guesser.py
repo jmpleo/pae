@@ -15,7 +15,7 @@ from utils import logging, dump
 
 class SessionPAE:
     def __init__(self,
-        load_model,
+        model_path,
         pii_load,
         similar_std,
         similar_sample_n,
@@ -44,7 +44,7 @@ class SessionPAE:
         ############################################################################
         ## vocab setup
         ############################################################################
-        self.vocab = CharVocab(alphabet)
+        self.vocab = CharVocab()#alphabet) ## NOTICE alphabet inference using be deprecated
 
         ############################################################################
         ## device setup
@@ -63,7 +63,7 @@ class SessionPAE:
             "vae": VAE
         }
 
-        ckpt = torch.load(load_model, map_location=device)
+        ckpt = torch.load(model_path, map_location=device, weights_only=False)
 
         self.model = arch[ckpt['args'].model_type](self.vocab, ckpt['args']).to(device)
 

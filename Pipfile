@@ -6,9 +6,9 @@ name = "pypi"
 [packages]
 torch = "*"
 numpy = "*"
+huggingface-hub = "*"
 
 [dev-packages]
-huggingface-hub = "*"
 
 [requires]
 python_version = "3.11"

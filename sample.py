@@ -8,6 +8,8 @@ import itertools
 import collections
 import time
 
+from huggingface_hub import hf_hub_download
+
 #from pcfg.lib_guesser.banner_info import print_banner
 #from pcfg.lib_guesser.pcfg_grammar import PcfgGrammar
 #from pcfg.lib_guesser.cracking_session import CrackingSession
@@ -71,6 +73,20 @@ def parse_command_line(program_info):
     )
 
     parser.add_argument(
+        '--repo_id',
+        default=program_info['pae']['repo_id'],
+        metavar='DIR',
+        help='path to repo src of models'
+    )
+
+    parser.add_argument(
+        '--local',
+        help='using load_model from local',
+        action='store_true'
+    )
+
+
+    parser.add_argument(
         '--min_len',
         type=int,
         default=program_info['pae']['min_len'],
@@ -110,12 +126,12 @@ def parse_command_line(program_info):
         metavar='STD'
     )
 
-    parser.add_argument(
-        '--alphabet',
-        help='path to alphabet file',
-        default=program_info['pae']['alphabet'],
-        metavar='FILE'
-    )
+    #parser.add_argument(
+    #    '--alphabet',
+    #    help='path to alphabet file',
+    #    default=program_info['pae']['alphabet'],
+    #    metavar='FILE'
+    #)
 
     parser.add_argument(
         '--pii',
@@ -216,14 +232,17 @@ def parse_command_line(program_info):
 
     program_info['log_file'] = ensure_absolute_path(args.log_file, ROOT_DIR)
 
-    program_info['pae']['load_model'] = ensure_absolute_path(args.load_model, ROOT_DIR)
+    program_info['pae']['load_model'] = args.load_model
+    program_info['pae']['repo_id'] = args.repo_id
+    program_info['pae']['local'] = args.local
+
     program_info['pae']['pii'] = ensure_absolute_path(args.pii, ROOT_DIR)
     program_info['pae']['min_len'] = args.min_len
     program_info['pae']['max_len'] = args.max_len
     program_info['pae']['stdout'] = args.stdout
     program_info['pae']['save_dir'] = ensure_absolute_path(args.save_dir, ROOT_DIR)
     program_info['pae']['batch_size'] = args.batch_size
-    program_info['pae']['alphabet'] = ensure_absolute_path(args.alphabet, ROOT_DIR)
+    #program_info['pae']['alphabet'] = ensure_absolute_path(args.alphabet, ROOT_DIR)
     program_info['pae']['similar_sample_n'] = args.similar_sample_n
     program_info['pae']['similar_std'] = args.similar_std
     program_info['pae']['wordlist_first'] = ensure_absolute_path(args.wordlist_first, ROOT_DIR)
@@ -265,8 +284,8 @@ def main():
 
             'batch_size': 1000,
 
-            'load_model': 'out/old/models/laae-0.01.pt',
-            'alphabet': 'out/old/models/vocab.alphabet',
+            'repo_id': 'jmpleo/pae',
+            'load_model': 'v1/rand-10-12-14-30000k/laae-0.01/model.pt',
 
             'pii': None,
 
@@ -332,11 +351,16 @@ def main():
     ############################################################################
     if args.method == 'pae':
 
+        if program_info['pae']['local']:
+            model_path = program_info['pae']['load_model']
+        else:
+            model_path = hf_hub_download(program_info['pae']['repo_id'], program_info['pae']['load_model'])
+
         if not os.path.exists(program_info['pae']['save_dir']):
             os.makedirs(program_info['pae']['save_dir'])
 
         session = SessionPAE(
-            load_model       = program_info['pae']['load_model'],
+            model_path       = model_path,
             pii_load         = program_info['pae']['pii'],
             similar_std      = program_info['pae']['similar_std'],
             similar_sample_n = program_info['pae']['similar_sample_n'],
@@ -345,7 +369,7 @@ def main():
             save_dir         = program_info['pae']['save_dir'],
             log_file         = log_file,
             batch_size       = program_info['pae']['batch_size'],
-            alphabet         = program_info['pae']['alphabet'],
+            #alphabet         = program_info['pae']['alphabet'],
             stdout           = program_info['pae']['stdout'],
             wordlist         = program_info['pae']['wordlist_first']
         )
