@@ -282,7 +282,8 @@ def main(args):
             vocab=vocab,
             device=device,
             max_len=args.max_len
-        )
+        ),
+        shuffle=True
     )
 
     logging(log_file, f"# train passwords {len(train_dataloader.dataset)}")
@@ -298,6 +299,7 @@ def main(args):
             device=device,
             max_len=args.max_len
         ),
+        shuffle=True
     )
 
     logging(log_file, f"# valid passwords {len(valid_dataloader.dataset)}")
