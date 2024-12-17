@@ -3,8 +3,10 @@ import os
 
 import itertools
 
+import numpy as np
 import torch
 from torch.utils.data import DataLoader
+
 
 from pae.model import AAE, DAE, VAE, reparameterize
 from pae.vocab import CharVocab
@@ -17,8 +19,9 @@ class SessionPAE:
     def __init__(self,
         model_path,
         pii_load,
-        similar_std,
-        similar_sample_n,
+        sigma_min,
+        sigma_max,
+        sigmas_n,
         min_len,
         max_len,
         save_dir,
@@ -29,8 +32,9 @@ class SessionPAE:
         wordlist=None
     ):
 
-        self.similar_std = similar_std
-        self.similar_sample_n = similar_sample_n
+        self.sigma_min = sigma_min
+        self.sigma_max = sigma_max
+        self.sigmas_n = sigmas_n
 
         self.min_len = min_len
         self.max_len = max_len
@@ -44,18 +48,14 @@ class SessionPAE:
         ############################################################################
         ## vocab setup
         ############################################################################
-        self.vocab = CharVocab()#alphabet) ## NOTICE alphabet inference using be deprecated
+        self.vocab = CharVocab() #alphabet) ## NOTICE alphabet inference using be deprecated
 
         ############################################################################
         ## device setup
         ############################################################################
-        device = torch.device(
-            "cuda"
-            if torch.cuda.is_available()
-            else "cpu"
-        )
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-        logging(log_file, f"# powered on {device}")
+        logging(log_file, f"# powered on {self.device}")
 
         arch = {
             "aae": AAE,
@@ -63,9 +63,9 @@ class SessionPAE:
             "vae": VAE
         }
 
-        ckpt = torch.load(model_path, map_location=device, weights_only=False)
+        ckpt = torch.load(model_path, map_location=self.device)
 
-        self.model = arch[ckpt['args'].model_type](self.vocab, ckpt['args']).to(device)
+        self.model = arch[ckpt['args'].model_type](self.vocab, ckpt['args']).to(self.device)
 
         self.model.load_state_dict(ckpt['model'])
         self.model.flatten()
@@ -101,18 +101,13 @@ class SessionPAE:
 
             self.min_len = self.max_len
 
-
         ############################################################################
         ## pii proccess
         ############################################################################
         self.pii_dataloader = DataLoader(
             batch_size=batch_size,
-            shuffle=True,
-            dataset=PIIDataset(
-                path=pii_load,
-                vocab=self.vocab,
-                device=device
-            )
+            dataset=PIIDataset(path=pii_load, vocab=self.vocab),
+            shuffle=True
         )
 
         logging(
@@ -120,9 +115,11 @@ class SessionPAE:
             f"# pii idents {len(self.pii_dataloader.dataset)}"
         )
 
-        self.limit_passwords = len(self.pii_dataloader.dataset)
-        self.limit_passwords *= (self.max_len + 1 - self.min_len)
-        self.limit_passwords *= self.similar_sample_n
+        self.limit_passwords = (
+            len(self.pii_dataloader.dataset) 
+            * (self.max_len + 1 - self.min_len)
+            * self.sigmas_n
+        )
 
 
     def run(self):
@@ -140,20 +137,20 @@ class SessionPAE:
                 dump((word[:-1] for word in wordlist), self.samples_file, self.stdout)
 
 
-        spaces = (
-            reparameterize(*self.model.encode(inputs.t().contiguous()))
-            for inputs in self.pii_dataloader
-        )
-
-        for i, space in enumerate(spaces):
+        for i, passwords_batch in enumerate(self.pii_dataloader):
+            
+            inputs, _ = self.vocab.encode_batch(device=self.device, lines=passwords_batch)
+            inputs = inputs.t().contiguous()
+            pii_latent_space = reparameterize(*self.model.encode(inputs))
 
             for length in range(self.min_len, self.max_len + 1):
 
-                similar_vectors = torch.normal(space, self.similar_std).to(space.device)
-
                 seq_batches = (
-                    self.model.generate(similar_vectors, length)
-                    for _ in range(self.similar_sample_n)
+                    self.model.generate(
+                        torch.normal(pii_latent_space, sigma).to(self.device),
+                        length
+                    )
+                    for sigma in np.linspace(self.sigma_min, self.sigma_max, self.sigmas_n)
                 )
 
                 password_batches = (

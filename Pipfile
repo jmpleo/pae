@@ -4,11 +4,11 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-torch = "*"
+torch = "==1.10.0"
 numpy = "*"
 huggingface-hub = "*"
 
 [dev-packages]
 
 [requires]
-python_version = "3.11"
+python_version = "3.8"

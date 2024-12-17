@@ -10,12 +10,6 @@ import time
 
 from huggingface_hub import hf_hub_download
 
-#from pcfg.lib_guesser.banner_info import print_banner
-#from pcfg.lib_guesser.pcfg_grammar import PcfgGrammar
-#from pcfg.lib_guesser.cracking_session import CrackingSession
-#from pcfg.lib_guesser.honeyword_session import HoneywordSession
-#from pcfg_guesser import create_save_config
-
 from pae_guesser import SessionPAE
 
 from utils import logging, dump
@@ -40,91 +34,86 @@ def parse_command_line(program_info):
     ############################################################################
     ### global
     ############################################################################
-    parser.add_argument(
-        '--method',
-        help='which model to generate',
-        default=program_info['method'],
-        choices=program_info['supported_methods'],
-        metavar='M'
-    )
+    parser.add_argument('--method',
+                                    help='which model to generate',
+                                    default=program_info['method'],
+                                    choices=program_info['supported_methods'],
+                                    metavar='M')
 
-    parser.add_argument(
-        '--wordlist_first',
-        help='first popular wordlist',
-        default=program_info['pae']['wordlist_first'],
-        metavar='FILE'
-    )
+    parser.add_argument('--wordlist_first',
+                                            help='first popular wordlist',
+                                            default=program_info['pae']['wordlist_first'],
+                                            metavar='FILE')
 
-    parser.add_argument(
-        '--log_file',
-        help='path to logging',
-        default=program_info['log_file'],
-        metavar='FILE'
-    )
+    parser.add_argument('--log_file',
+                                        help='path to logging',
+                                        default=program_info['log_file'],
+                                        metavar='FILE')
+
+    parser.add_argument('--save_dir',
+                                    help='directory to save checkpoints and outputs',
+                                    default=program_info['pae']['save_dir'],
+                                    metavar='DIR')
 
     ############################################################################
     ### pae
     ############################################################################
-    parser.add_argument(
-        '--load_model',
-        default=program_info['pae']['load_model'],
-        metavar='FILE',
-        help='path to load checkpoint if specified'
-    )
+    parser.add_argument('--load_model',
+                                        default=program_info['pae']['load_model'],
+                                        metavar='PATH',
+                                        help='path to load checkpoint if specified')
 
-    parser.add_argument(
-        '--repo_id',
-        default=program_info['pae']['repo_id'],
-        metavar='DIR',
-        help='path to repo src of models'
-    )
+    parser.add_argument('--repo_id',
+                                        default=program_info['pae']['repo_id'],
+                                        metavar='REPO',
+                                        help='path to repo src of model')
 
-    parser.add_argument(
-        '--local',
-        help='using load_model from local',
-        action='store_true'
-    )
+    parser.add_argument('--local',
+                                    help='using load_model arg as local path',
+                                    action='store_true')
 
+    # todo:
+    # parser.add_argument('--len', 
+    #                            type=str,
+    #                            default=program_info['pae']['len'],
+    #                            metavar='MIN',
+    #                            help='length of generated passwords (same as "8";"8-10";"8,9,11")')
 
-    parser.add_argument(
-        '--min_len',
-        type=int,
-        default=program_info['pae']['min_len'],
-        metavar='N',
-        help='min length of generated passwords'
-    )
+    parser.add_argument('--min_len',
+                                    type=int,
+                                    default=program_info['pae']['min_len'],
+                                    metavar='MIN',
+                                    help='min length of generated passwords')
 
-    parser.add_argument(
-        '--max_len',
-        type=int,
-        default=program_info['pae']['max_len'],
-        metavar='N',
-        help='max length of generated passwords'
-    )
+    parser.add_argument('--max_len',
+                                    type=int,
+                                    default=program_info['pae']['max_len'],
+                                    metavar='MAX',
+                                    help='max length of generated passwords')
 
-    parser.add_argument(
-        '--batch_size',
-        type=int,
-        default=program_info['pae']['batch_size'],
-        metavar='N',
-        help='batch size'
-    )
+    parser.add_argument('--batch_size',
+                                    type=int,
+                                    default=program_info['pae']['batch_size'],
+                                    metavar='B',
+                                    help='batch size')
 
-    parser.add_argument(
-        '--similar_sample_n',
-        type=int,
-        default=program_info['pae']['similar_sample_n'],
-        metavar='N',
-        help='samples for each similar vector'
-    )
+    parser.add_argument('--sigmas_n',
+                                    type=int,
+                                    default=program_info['pae']['sigmas_n'],
+                                    metavar='N',
+                                    help='pints of sigmas on [sigma_min, sigma_max]')
 
-    parser.add_argument(
-        '--similar_std',
-        help='sample similars with this standart deviation',
-        default=program_info['pae']['similar_std'],
-        type=float,
-        metavar='STD'
-    )
+    parser.add_argument('--sigma_min',
+                                        help='min sigma sampling',
+                                        default=program_info['pae']['sigma_min'],
+                                        type=float,
+                                        metavar='SMIN')  
+    
+    parser.add_argument('--sigma_max',
+                                        help='max sigma sampling',
+                                        default=program_info['pae']['sigma_max'],
+                                        type=float,
+                                        metavar='SMAX')
 
     #parser.add_argument(
     #    '--alphabet',
@@ -133,99 +122,14 @@ def parse_command_line(program_info):
     #    metavar='FILE'
     #)
 
-    parser.add_argument(
-        '--pii',
-        help='path to leaked info, (PII, passwords, nicks, etc.)',
-        default=program_info['pae']['pii'],
-        metavar='FILE|DIR'
-    )
+    parser.add_argument('--pii',
+                                help='path to leaked info, (PII, passwords, nicks, etc.)',
+                                default=program_info['pae']['pii'],
+                                metavar='FILE|DIR')
 
-    parser.add_argument(
-        '--stdout',
-        help='print password to stdout',
-        action='store_true'
-    )
-
-    parser.add_argument(
-        '--save_dir',
-        help='directory to save checkpoints and outputs',
-        default=program_info['pae']['save_dir'],
-        metavar='DIR'
-    )
-
-    ###########################################################################
-    ## pcfg
-    ###########################################################################
-
-    ## Standard options for ruleset, etc
-    #
-    # The rule name to load the grammar from. Should be saved under the
-    # 'Rules' folder. This rule needs to have been previously created by
-    # the pcfg 'trainer.py' program.
-    #parser.add_argument(
-    #    '--rule',
-    #    help = 'The ruleset to use. Default is ' +
-    #    program_info['pcfg']['rule_name'],
-    #    metavar = 'RULESET_NAME',
-    #    required = False,
-    #    default = program_info['pcfg']['rule_name']
-    #)
-
-    #parser.add_argument(
-    #    '--session',
-    #    help = 'Session name. Used for saving/restoring sessions Default is ' +
-    #        program_info['pcfg']['session_name'],
-    #    metavar = 'SESSION_NAME',
-    #    required = False,
-    #    default = program_info['pcfg']['session_name']
-    #)
-
-    #"""
-    #parser.add_argument(
-    #    '--load',
-    #    '-l',
-    #    help='Loads a previous guessing session',
-    #    dest='load',
-    #    action='store_const',
-    #    const= not program_info['load_session'],
-    #    default = program_info['load_session']
-    #)
-    #"""
-
-    #parser.add_argument(
-    #    '--limit',
-    #    help='Generate N guesses and then exit. This can be used for wordlist generation and/or research evaluation',
-    #    type=int,
-    #    default=program_info['pcfg']['limit']
-    #)
-
-    #parser.add_argument(
-    #    '--skip_brute',
-    #    help='Do not perform Markov based guesses using OMEN. This is useful ' +
-    #        'if you are running a seperate dedicated Markov based attack',
-    #    action='store_const',
-    #    const= not program_info['pcfg']['skip_brute'],
-    #    default = program_info['pcfg']['skip_brute']
-    #)
-
-    #parser.add_argument(
-    #    '--lowercase',
-    #    help='Only generate lowercase guesses. No case mangling. (Setting is currently not applied to OMEN generated guesses)',
-    #    action='store_const',
-    #    const= not program_info['pcfg']['skip_case'],
-    #    default = program_info['pcfg']['skip_case']
-    #)
-
-    #parser.add_argument(
-    #    '--mode',
-    #    help = "Method in which guesses are generated Default is '" +
-    #        program_info['pcfg']['cracking_mode'] +
-    #        "' Supported Modes: " + str(program_info['pcfg']['supported_modes']),
-    #    metavar = 'MODE',
-    #    required = False,
-    #    default = program_info['pcfg']['cracking_mode'],
-    #    choices = program_info['pcfg']['supported_modes']
-    #)
+    parser.add_argument('--stdout',
+                                    help='print password to stdout',
+                                    action='store_true')
 
     # Parse all the args and save them
     args=parser.parse_args()
@@ -243,21 +147,10 @@ def parse_command_line(program_info):
     program_info['pae']['save_dir'] = ensure_absolute_path(args.save_dir, ROOT_DIR)
     program_info['pae']['batch_size'] = args.batch_size
     #program_info['pae']['alphabet'] = ensure_absolute_path(args.alphabet, ROOT_DIR)
-    program_info['pae']['similar_sample_n'] = args.similar_sample_n
-    program_info['pae']['similar_std'] = args.similar_std
+    program_info['pae']['sigmas_n'] = args.sigmas_n
+    program_info['pae']['sigma_min'] = args.sigma_min
+    program_info['pae']['sigma_max'] = args.sigma_max
     program_info['pae']['wordlist_first'] = ensure_absolute_path(args.wordlist_first, ROOT_DIR)
-
-
-    # Standard Options
-    #program_info['pcfg']['rule_name'] = args.rule
-    #program_info['pcfg']['session_name'] = args.session
-    ##program_info['pcfg']['load_session'] = args.session
-
-    ## Advanced Options
-    #program_info['pcfg']['limit'] = args.limit
-    #program_info['pcfg']['skip_brute'] = args.skip_brute
-    #program_info['pcfg']['skip_case'] = args.lowercase
-    #program_info['pcfg']['cracking_mode'] = args.mode
 
     args = parser.parse_args()
 
@@ -269,55 +162,23 @@ def main():
         Main function
     """
     program_info = {
-
         'name': 'sample autogen',
-
         'method': 'pae',
-
         'supported_methods': ['pae'], # todo: 'pcfg', 'passgan'],
-
         'log_file': 'log.txt',
-
         'pae' : {
-            'min_len': 5,
-            'max_len': 20,
-
-            'batch_size': 1000,
-
+            'min_len': 8,
+            'max_len': 8,
+            'batch_size': 4096,
             'repo_id': 'jmpleo/pae',
             'load_model': 'v1/rand-10-12-14-30000k/laae-0.01/model.pt',
-
             'pii': None,
-
             'wordlist_first': None,
-
-            'similar_sample_n': 10,
-            'similar_std': 0.1,
-
+            'sigmas_n': 50,
+            'sigma_min': 0.001,
+            'sigma_max': 0.3,
             'save_dir': 'samples'
-        },
-
-        #'pcfg': {
-        #    # Program and Contact Info
-        #    'name':'PCFG Guesser',
-        #    'version': '4.6',
-        #    'author':'Matt Weir',
-        #    'contact':'cweir@vt.edu',
-
-        #    # Standard Options
-        #    'rule_name':'top1kk',
-        #    'session_name':'default_run',
-        #    'load_session':False,
-        #    'limit': None,
-
-        #    # Cracking Mode options
-        #    'cracking_mode':'true_prob_order',
-        #    'supported_modes':['true_prob_order', 'random_walk', 'honeywords'],
-
-        #    # Advanced Options
-        #    'skip_brute': False,
-        #    'skip_case': False
-        #}
+        }
     }
 
     args = parse_command_line(program_info)
@@ -326,7 +187,6 @@ def main():
     ## path setup
     ############################################################################
     requred_dirs = [
-        #"pcfg",
         "pae"
     ]
 
@@ -351,19 +211,25 @@ def main():
     ############################################################################
     if args.method == 'pae':
 
-        if program_info['pae']['local']:
-            model_path = program_info['pae']['load_model']
-        else:
-            model_path = hf_hub_download(program_info['pae']['repo_id'], program_info['pae']['load_model'])
 
         if not os.path.exists(program_info['pae']['save_dir']):
             os.makedirs(program_info['pae']['save_dir'])
 
+        if program_info['pae']['local']:
+            model_path = program_info['pae']['load_model']
+        
+        else:
+            model_path = hf_hub_download(
+                program_info['pae']['repo_id'], 
+                program_info['pae']['load_model']
+            )
+
         session = SessionPAE(
             model_path       = model_path,
             pii_load         = program_info['pae']['pii'],
-            similar_std      = program_info['pae']['similar_std'],
-            similar_sample_n = program_info['pae']['similar_sample_n'],
+            sigma_min        = program_info['pae']['sigma_min'],
+            sigma_max        = program_info['pae']['sigma_max'],
+            sigmas_n         = program_info['pae']['sigmas_n'],
             min_len          = program_info['pae']['min_len'],
             max_len          = program_info['pae']['max_len'],
             save_dir         = program_info['pae']['save_dir'],
@@ -373,34 +239,6 @@ def main():
             stdout           = program_info['pae']['stdout'],
             wordlist         = program_info['pae']['wordlist_first']
         )
-
-    #elif args.method == 'pcfg':
-
-    #    base_directory = os.path.join(
-    #        root_dir,
-    #        'pcfg',
-    #        'Rules',
-    #        program_info['pcfg']['rule_name']
-    #    )
-
-    #    session_save = os.path.join(
-    #        root_dir,
-    #        '' + program_info['pcfg']['session_name'] + '.sav'
-    #    )
-
-    #    save_config = create_save_config(program_info['pcfg'])
-
-    #    pcfg = PcfgGrammar(
-    #        program_info['pcfg']['rule_name'],
-    #        base_directory,
-    #        program_info['pcfg']['version'],
-    #        session_save,
-    #        skip_brute = program_info['pcfg']['skip_brute'],
-    #        skip_case = program_info['pcfg']['skip_case']
-    #        #debug = False #program_info['debug']
-    #    )
-
-    #    session = CrackingSession(pcfg, save_config, session_save)
 
     else:
         logging(log_file, "Exiting...")

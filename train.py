@@ -21,191 +21,144 @@ from utils import set_seed, logging
 parser = argparse.ArgumentParser()
 
 # path param
-parser.add_argument(
-    "--train",
-    metavar="FILE",
-    required=True,
-    help="path to leak passwords for train"
-)
+parser.add_argument("--train", 
+                                    metavar="FILE",
+                                    required=True,
+                                    help="path to leak passwords for train")
 
-parser.add_argument(
-    "--valid",
-    metavar="FILE",
-    required=True,
-    help="path to leak passwords for valid"
-)
+parser.add_argument("--valid", 
+                                    metavar="FILE",
+                                    required=True,
+                                    help="path to leak passwords for valid")
 
-parser.add_argument(
-    "--alphabet",
-    metavar="FILE",
-    required=False,
-    help="path to alphabet file"
-)
+parser.add_argument("--alphabet",
+                                    metavar="FILE",
+                                    required=False,
+                                    help="path to alphabet file")       
 
-parser.add_argument(
-    "--save_dir",
-    default="checkpoints",
-    metavar="DIR",
-    help="directory to save checkpoints and outputs",
-)
+parser.add_argument("--save_dir",
+                                    default="checkpoints",
+                                    metavar="DIR",
+                                    help="directory to save checkpoints and outputs")
 
-parser.add_argument(
-    "--load_model",
-    default="",
-    metavar="FILE",
-    help="path to load checkpoint if specified",
-)
+parser.add_argument("--load_model",
+                                    default="",
+                                    metavar="FILE",
+                                    help="path to load checkpoint if specified")
 
 # model param
-parser.add_argument(
-    "--model_type",
-    default="aae",
-    metavar="M",
-    choices=["dae", "vae", "aae"],
-    help="which model to learn",
-)
+parser.add_argument("--model_type",
+                                    default="aae",
+                                    metavar="M",
+                                    choices=["dae", "vae", "aae"],
+                                    help="which model to learn")
 
-parser.add_argument(
-    "--max_len",
-    type=int,
-    required=True,
-    metavar="D",
-    help="max length of passwords"
-)
+parser.add_argument("--max_len",
+                                type=int,
+                                required=True,
+                                metavar="D",
+                                help="max length of passwords")
 
-parser.add_argument(
-    "--dim_z",
-    type=int,
-    default=128,
-    metavar="D",
-    help="dimension of latent variable z"
-)
+parser.add_argument("--dim_z",
+                                type=int,
+                                default=128,
+                                metavar="D",
+                                help="dimension of latent variable z")
 
-parser.add_argument(
-    "--dim_emb",
-    type=int,
-    default=64,
-    metavar="D",
-    help="dimension of word embedding"
-)
+parser.add_argument("--dim_emb",
+                                type=int,
+                                default=64,
+                                metavar="D",
+                                help="dimension of word embedding")
 
-parser.add_argument(
-    "--dim_h",
-    type=int,
-    default=256,
-    metavar="D",
-    help="dimension of hidden state per layer",
-)
+parser.add_argument("--dim_h",
+                                type=int,
+                                default=256,
+                                metavar="D",
+                                help="dimension of hidden state per layer")
 
-parser.add_argument(
-    "--nlayers",
-    type=int,
-    default=1,
-    metavar="N",
-    help="number of LSTM layers"
-)
+parser.add_argument("--nlayers",
+                                type=int,
+                                default=1,
+                                metavar="N",
+                                help="number of LSTM layers")
 
-parser.add_argument(
-    "--dim_d",
-    type=int,
-    default=512,
-    metavar="D",
-    help="dimension of hidden state in AAE discriminator",
-)
+parser.add_argument("--dim_d",
+                                type=int,
+                                default=512,
+                                metavar="D",
+                                help="dimension of hidden state in AAE discriminator")
 
 # train param
-parser.add_argument(
-    "--lambda_kl",
-    type=float,
-    default=0,
-    metavar="R",
-    help="weight for kl term in VAE"
-)
+parser.add_argument("--lambda_kl",
+                                    type=float,
+                                    default=0,
+                                    metavar="R",
+                                    help="weight for kl term in VAE")
 
-parser.add_argument(
-    "--lambda_adv",
-    type=float,
-    default=1,
-    metavar="R",
-    help="weight for adversarial loss in AAE",
-)
+parser.add_argument("--lambda_adv",
+                                    type=float,
+                                    default=1,
+                                    metavar="R",
+                                    help="weight for adversarial loss in AAE")
 
-parser.add_argument(
-    "--lambda_p",
-    type=float,
-    default=0,
-    metavar="R",
-    help="weight for L1 penalty on posterior log-variance",
-)
+parser.add_argument("--lambda_p",
+                                type=float,
+                                default=0,
+                                metavar="R",
+                                help="weight for L1 penalty on posterior log-variance")
 
-parser.add_argument(
-    "--noise",
-    default="0.2,0.1,0",
-    metavar="P,P,K",
-    help="char drop prob, substitute prob, max char shuffle distance",
-)
+parser.add_argument("--noise",
+                                default="0,0,0",
+                                metavar="P,P,K",
+                                help="char drop prob, substitute prob, max char shuffle distance")
 
-parser.add_argument(
-    "--dropout",
-    type=float,
-    default=0.5,
-    metavar="DROP",
-    help="dropout probability (0 = no dropout)",
-)
+parser.add_argument("--dropout",
+                                type=float,
+                                default=0.5,
+                                metavar="DROP",
+                                help="dropout probability (0 = no dropout)")
 
-parser.add_argument(
-    "--lr",
-    type=float,
-    default=0.0005,
-    metavar="LR",
-    help="adam learning rate"
-)
+parser.add_argument("--lr",
+                            type=float,
+                            default=0.0005,
+                            metavar="LR",
+                            help="adam learning rate")
 
-parser.add_argument(
-    "--b1",
-    type=float,
-    default=0.5,
-    metavar="LR",
-    help="adam decay rates - b1"
-)
+parser.add_argument("--b1",
+                            type=float,
+                            default=0.5,
+                            metavar="LR",
+                            help="adam decay rates - b1")
 
-parser.add_argument(
-    "--b2",
-    type=float,
-    default=0.999,
-    metavar="LR",
-    help="adam decay rates - b2"
-)
+parser.add_argument("--b2",
+                            type=float,
+                            default=0.999,
+                            metavar="LR",
+                            help="adam decay rates - b2")
 
-parser.add_argument(
-    "--epochs",
-    type=int,
-    default=50,
-    metavar="N",
-    help="number of training epochs"
-)
+parser.add_argument("--epochs",
+                                type=int,
+                                default=50,
+                                metavar="N",
+                                help="number of training epochs")
 
-parser.add_argument(
-    "--batch_size",
-    type=int,
-    default=256,
-    metavar="N",
-    help="batch size"
-)
+parser.add_argument("--batch_size",
+                                    type=int,
+                                    default=256,
+                                    metavar="N",
+                                    help="batch size")
 
-parser.add_argument(
-    "--log_interval",
-    type=int,
-    default=100,
-    metavar="N",
-    help="report interval"
-)
+parser.add_argument("--log_interval",
+                                    type=int,
+                                    default=100,
+                                    metavar="N",
+                                    help="report interval")
 
-parser.add_argument(
-    "--no_cuda",
-    action="store_true",
-    help="disable CUDA"
-)
+parser.add_argument("--no_cuda",
+                                action="store_true",
+                                help="disable CUDA")
+
 
 
 def evaluate(model, dataloader: DataLoader):
@@ -246,6 +199,14 @@ def main(args):
     ############################################################################
     if not os.path.exists(args.save_dir):
         os.makedirs(args.save_dir)
+    
+    if not(os.path.exists(args.train) and os.path.isfile(args.train)):
+        logging(log_file, f"# training dataset {args.train} not found") 
+        return
+
+    if not(os.path.exists(args.valid) and os.path.isfile(args.valid)):
+        logging(log_file, f"# valid dataset {args.valid} not found") 
+        return
 
     log_file = os.path.join(args.save_dir, "log.txt")
     vocab_file = os.path.join(args.save_dir, "vocab.alphabet")
@@ -277,32 +238,22 @@ def main(args):
     ############################################################################
     train_dataloader = torch.utils.data.DataLoader(
         batch_size=args.batch_size,
-        dataset=PasswordDataset(
-            file=args.train,
-            vocab=vocab,
-            device=device,
-            max_len=args.max_len
-        ),
+        dataset=PasswordDataset(file=args.train, vocab=vocab),
         shuffle=True
     )
 
-    logging(log_file, f"# train passwords {len(train_dataloader.dataset)}")
+    logging(log_file, f"# {len(train_dataloader.dataset)} train passwords was loaded")
 
     ############################################################################
     ## valid data load
     ############################################################################
     valid_dataloader = torch.utils.data.DataLoader(
         batch_size=args.batch_size,
-        dataset=PasswordDataset(
-            file=args.valid,
-            vocab=vocab,
-            device=device,
-            max_len=args.max_len
-        ),
+        dataset=PasswordDataset(file=args.valid, vocab=vocab),
         shuffle=True
     )
 
-    logging(log_file, f"# valid passwords {len(valid_dataloader.dataset)}")
+    logging(log_file, f"# {len(valid_dataloader.dataset)} valid passwords was loaded")
 
     ############################################################################
     ## model init
@@ -323,7 +274,7 @@ def main(args):
 
     n_param = sum(x.data.nelement() for x in model.parameters())
 
-    logging(log_file, f"# model {args.model_type} parameters: {n_param}")
+    logging(log_file, f"# model {args.model_type} with parameters was init: {n_param}")
 
     ############################################################################
     ## train loop
@@ -339,9 +290,14 @@ def main(args):
         model.train()
         meters = collections.defaultdict(AverageMeter)
 
-        for i, (inputs, targets) in enumerate(train_dataloader):
+        for i, passwords_batch in enumerate(train_dataloader):
+            
+            inputs, targets = vocab.encode_batch(
+                lines=passwords_batch, 
+                device=device,
+                max_len=args.max_len
+            )
 
-            # batch second
             inputs = inputs.t().contiguous()
             targets = targets.t().contiguous()
 

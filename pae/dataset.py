@@ -13,7 +13,7 @@ def cut_lines(lines, alphabet):
 
 
 class PIIDataset(Dataset):
-    def __init__(self, path: str, vocab, device):
+    def __init__(self, path: str, vocab):
 
         # top 20 passwords
         text = """
@@ -36,13 +36,18 @@ class PIIDataset(Dataset):
                     text += f.read()
 
 
-        self.pii_idxs, _ = vocab.encode_batch(
-            device=device,
-            lines=list(cut_lines(
-                alphabet=vocab.alphabet,
-                lines=PIIDataset.split(PIIDataset.preprocess(text))
-            ))
-        )
+        self.passwords = list(cut_lines(
+            alphabet=vocab.alphabet,
+            lines=PIIDataset.split(PIIDataset.preprocess(text))
+        ))
+
+        # self.pii_idxs, _ = vocab.encode_batch(
+        #     device=device,
+        #     lines=list(cut_lines(
+        #         alphabet=vocab.alphabet,
+        #         lines=PIIDataset.split(PIIDataset.preprocess(text))
+        #     ))
+        # )
 
 
     @staticmethod
@@ -78,36 +83,31 @@ class PIIDataset(Dataset):
 
 
     def __len__(self):
-        return self.pii_idxs.shape[0]
+        return len(self.passwords)
 
     def __getitem__(self, idx):
-        return self.pii_idxs[idx]
+        return self.passwords[idx]
 
 
 class PasswordDataset(Dataset):
     """
         load passwords fixed max_len
     """
-    def __init__(self, file: str, vocab, device, max_len):
+    def __init__(self, file: str, vocab):
 
         with open(file, 'r', encoding="utf8") as f:
 
-            self.max_len = max_len
-
-            self.bos_idx, self.eos_idx = vocab.encode_batch(
-                device=device,
-                max_len=max_len,
-                lines=list(
-                    cut_lines(
-                        lines=(l[:-1] for l in f),
-                        alphabet=vocab.alphabet
-                    )
+            self.passwords = [
+                line[:-1] 
+                for line in f if line[:-1] and all(
+                    c in vocab.alphabet for c in line[:-1]
                 )
-            )
-
+            ]
+        
 
     def __len__(self):
-        return self.bos_idx.shape[0]
+        return len(self.passwords)
 
     def __getitem__(self, idx):
-        return self.bos_idx[idx], self.eos_idx[idx]
+        return self.passwords[idx]
+    
