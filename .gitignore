@@ -1,7 +1,5 @@
 __pycache__
-.vim*
-.idea
-.ipynb_checkpoints
+.*
 
 checkpoints
 data
@@ -17,5 +15,3 @@ pii.txt
 out.tar
 out
 top100k.txt
-
-.sync

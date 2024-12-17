@@ -1,11 +1,2 @@
-out/8-12_150kk_15_09_24/model.pt
-out/8-12_150kk_17_08_24/model.pt
-out/8-12_150kk_22_09_24/model.pt
-out/8_100kk_09_08_24/model.pt
-out/8_100kk_16_08_24/model.pt
-out/old/models/8-100kk-limit50kk/laae-0.1/model.pt
-out/old/models/laae-0.01.pt
-out/old/models/rand-8-10-12-14-16-49955650k/laae-0.01/model.pt
-out/old/models/top100kk-limit45k/laae-0.1/model.pt
-out/old/models/vae-0.01.pt
+out/
 *.pt filter=lfs diff=lfs merge=lfs -text

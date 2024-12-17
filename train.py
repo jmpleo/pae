@@ -161,15 +161,19 @@ parser.add_argument("--no_cuda",
 
 
 
-def evaluate(model, dataloader: DataLoader):
+def evaluate(model, dataloader: DataLoader, vocab, device, max_len):
     """
     compute model metrics
     """
     model.eval()
     meters = collections.defaultdict(AverageMeter)
     with torch.no_grad():
-        for inputs, targets in dataloader:
-
+        for passwords_batch in dataloader:
+            inputs, targets = vocab.encode_batch(
+                lines=passwords_batch, 
+                device=device,
+                max_len=max_len
+            )
             # batch second
             inputs = inputs.t().contiguous()
             targets = targets.t().contiguous()
@@ -322,7 +326,7 @@ def main(args):
 
                 logging(log_file, log_output)
 
-        valid_meters = evaluate(model, valid_dataloader)
+        valid_meters = evaluate(model, valid_dataloader, vocab, device, args.max_len)
 
         logging(log_file, "-" * 80)
 
