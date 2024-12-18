@@ -79,17 +79,17 @@ def parse_command_line(program_info):
     #                            metavar='MIN',
     #                            help='length of generated passwords (same as "8";"8-10";"8,9,11")')
 
-    parser.add_argument('--min_len',
-                                    type=int,
-                                    default=program_info['pae']['min_len'],
-                                    metavar='MIN',
-                                    help='min length of generated passwords')
+    # parser.add_argument('--min_len',
+    #                                 type=int,
+    #                                 default=program_info['pae']['min_len'],
+    #                                 metavar='MIN',
+    #                                 help='min length of generated passwords')
 
-    parser.add_argument('--max_len',
-                                    type=int,
-                                    default=program_info['pae']['max_len'],
-                                    metavar='MAX',
-                                    help='max length of generated passwords')
+    # parser.add_argument('--max_len',
+    #                                 type=int,
+    #                                 default=program_info['pae']['max_len'],
+    #                                 metavar='MAX',
+    #                                 help='max length of generated passwords')
 
     parser.add_argument('--batch_size',
                                     type=int,
@@ -131,6 +131,13 @@ def parse_command_line(program_info):
                                     help='print password to stdout',
                                     action='store_true')
 
+
+    parser.add_argument("--cuda",
+                                action="store_true",
+                                help="disable CUDA")
+
+
+
     # Parse all the args and save them
     args=parser.parse_args()
 
@@ -141,8 +148,8 @@ def parse_command_line(program_info):
     program_info['pae']['local'] = args.local
 
     program_info['pae']['pii'] = ensure_absolute_path(args.pii, ROOT_DIR)
-    program_info['pae']['min_len'] = args.min_len
-    program_info['pae']['max_len'] = args.max_len
+    #program_info['pae']['min_len'] = args.min_len
+    #program_info['pae']['max_len'] = args.max_len
     program_info['pae']['stdout'] = args.stdout
     program_info['pae']['save_dir'] = ensure_absolute_path(args.save_dir, ROOT_DIR)
     program_info['pae']['batch_size'] = args.batch_size
@@ -151,6 +158,7 @@ def parse_command_line(program_info):
     program_info['pae']['sigma_min'] = args.sigma_min
     program_info['pae']['sigma_max'] = args.sigma_max
     program_info['pae']['wordlist_first'] = ensure_absolute_path(args.wordlist_first, ROOT_DIR)
+    program_info['pae']['cuda'] = args.cuda
 
     args = parser.parse_args()
 
@@ -167,8 +175,8 @@ def main():
         'supported_methods': ['pae'], # todo: 'pcfg', 'passgan'],
         'log_file': 'log.txt',
         'pae' : {
-            'min_len': 8,
-            'max_len': 8,
+            #'min_len': 8,
+            #'max_len': 8,
             'batch_size': 4096,
             'repo_id': 'jmpleo/pae',
             'load_model': 'v1/rand-10-12-14-30000k/laae-0.01/model.pt',
@@ -230,14 +238,15 @@ def main():
             sigma_min        = program_info['pae']['sigma_min'],
             sigma_max        = program_info['pae']['sigma_max'],
             sigmas_n         = program_info['pae']['sigmas_n'],
-            min_len          = program_info['pae']['min_len'],
-            max_len          = program_info['pae']['max_len'],
+            #min_len          = program_info['pae']['min_len'],
+            #max_len          = program_info['pae']['max_len'],
             save_dir         = program_info['pae']['save_dir'],
             log_file         = log_file,
             batch_size       = program_info['pae']['batch_size'],
             #alphabet         = program_info['pae']['alphabet'],
             stdout           = program_info['pae']['stdout'],
-            wordlist         = program_info['pae']['wordlist_first']
+            wordlist         = program_info['pae']['wordlist_first'],
+            cuda             = program_info['pae']['cuda']
         )
 
     else:
