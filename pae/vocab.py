@@ -19,6 +19,7 @@ class CharVocab:
             self.alphabet += '"'
             self.alphabet += "'`!^@#$%&.,?:;~-+*=_/\\|[]{}()<> "
 
+        # TODO: self.idx_to_char = ''.join(sorted(self.alphabet))
         self.idx_to_char = self.alphabet
 
         pad, unk, bos, eos = '\0', '\1', '\2', '\3'

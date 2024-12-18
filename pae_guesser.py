@@ -3,10 +3,10 @@ import os
 
 import itertools
 
+from tqdm import tqdm
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
-
 
 from pae.model import AAE, DAE, VAE, reparameterize
 from pae.vocab import CharVocab
@@ -137,40 +137,31 @@ class SessionPAE:
                 dump((word[:-1] for word in wordlist), self.samples_file, self.stdout)
 
 
-        for i, passwords_batch in enumerate(self.pii_dataloader):
-            
+        for i, passwords_batch in enumerate(tqdm(self.pii_dataloader, desc="batches", unit="batch")):
+    
             inputs, _ = self.vocab.encode_batch(device=self.device, lines=passwords_batch)
             inputs = inputs.t().contiguous()
-            pii_latent_space = reparameterize(*self.model.encode(inputs))
+            pii_latents = reparameterize(*self.model.encode(inputs))
 
-            for length in range(self.min_len, self.max_len + 1):
+            for length in range(self.min_len, self.max_len + 1): #, desc="Generating lengths", unit="length", leave=False):
 
-                seq_batches = (
-                    self.model.generate(
-                        torch.normal(pii_latent_space, sigma).to(self.device),
-                        length
-                    )
-                    for sigma in np.linspace(self.sigma_min, self.sigma_max, self.sigmas_n)
-                )
+                for sigma in tqdm(np.linspace(self.sigma_min, self.sigma_max, self.sigmas_n), desc="sigmas", unit="sigma", leave=False):
+                    
+                    same_zs = torch.normal(pii_latents, sigma).to(self.device)
 
-                password_batches = (
-                    self.vocab.decode_batch(seq_batch)
-                    for seq_batch in seq_batches
-                )
+                    seq_batch = self.model.generate(same_zs, length)
 
-                passwords = (
-                    password
-                    for password_batch in password_batches
-                        for password in password_batch
-                )
+                    gen_batch = self.vocab.decode_batch(seq_batch)
 
-                dump(passwords, self.samples_file, self.stdout)
+                    passwords = (password for password in gen_batch)
 
-                logging(
-                    self.log_file,
-                    f"| batch {i + 1:2d}/{len(self.pii_dataloader)} "
-                    f"| len {length:2d} "
-                )
+                    dump(passwords, self.samples_file, self.stdout)
+
+                    #logging(
+                    #    self.log_file,
+                    #    f"| batch {i + 1:2d}/{len(self.pii_dataloader)} "
+                    #    f"| len {length:2d} "
+                    #)
 
 
         logging(

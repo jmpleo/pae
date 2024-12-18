@@ -103,7 +103,7 @@ class PasswordDataset(Dataset):
                     c in vocab.alphabet for c in line[:-1]
                 )
             ]
-        
+
 
     def __len__(self):
         return len(self.passwords)

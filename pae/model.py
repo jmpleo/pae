@@ -110,8 +110,10 @@ class DAE(TextModel):
     def generate(self, z, max_len, alg="greedy"):
 
         #assert alg in ['greedy']
-
+        
+        # z: [batch_size, dim_z]
         passwds = torch.full(
+            # [batch_size, max_len + 1]
             size=(len(z), max_len + 1),
             fill_value=self.vocab.pad_idx,
             dtype=torch.long,
@@ -129,6 +131,7 @@ class DAE(TextModel):
 
         for i in range(max_len):
 
+            # passwds[:,i]: [batch_size, 1] -> inp: [1, batch_size]
             # logits: [1, batch_size, vocab_size]
             # hid: [1, batch_size, hidden_size]
             logits, hid = self.decode(z, passwds[:,i].view(1, -1), hid)
