@@ -144,37 +144,52 @@ class SessionPAE:
 
         sigmas = torch.linspace(self.sigma_min, self.sigma_max, self.sigmas_n).to(self.device)
 
-        for i, passwords_batch in enumerate(tqdm(self.pii_dataloader, desc="batches", unit="batch")):
-    
-            inputs, _ = self.vocab.encode_batch(device=self.device, lines=passwords_batch)
-            inputs = inputs.t().contiguous()
+        with tqdm(
+                total=self.limit_passwords, desc='passwords', unit='password', leave=False, 
+                bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt} - {rate_fmt}'
+            ) as pbar, tqdm(      
+                total=len(self.pii_dataloader), desc='batches', unit='batch', leave=False, 
+                bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt}'
+            ) as bbar:
 
-            # [batch_size, dim_z]
-            pii_latents = reparameterize(*self.model.encode(inputs))
-            
-            # TODO: deprecate len choise
-            # for length in range(self.min_len, self.max_len + 1): #, desc="Generating lengths", unit="length", leave=False):
-            
-            for sigma in tqdm(torch.split(sigmas, self.batch_size // len(pii_latents)), desc="sigmas", unit="sigma", leave=False):
+            #for i, passwords_batch in enumerate(tqdm(self.pii_dataloader, desc="batches", unit="batch")):
+            for i, passwords_batch in enumerate(self.pii_dataloader):
+        
+                inputs, _ = self.vocab.encode_batch(device=self.device, lines=passwords_batch)
+                inputs = inputs.t().contiguous()
+
+                # [batch_size, dim_z]
+                pii_latents = reparameterize(*self.model.encode(inputs))
                 
-                same_zs = torch.normal(
-                    pii_latents.unsqueeze(0), sigma.view(-1, 1, 1)
-                ).view(-1, self.model.opt.dim_z).to(self.device)
+                # TODO: deprecate len choise
+                # for length in range(self.min_len, self.max_len + 1): #, desc="Generating lengths", unit="length", leave=False):
+        
+                #for sigma in tqdm(torch.split(sigmas, self.batch_size // len(pii_latents)), desc="sigmas", unit="sigma", leave=False):
+                for sigma in torch.split(sigmas, self.batch_size // len(pii_latents)):
 
-                seq_batch = self.model.generate(same_zs, self.max_len)
+                    same_zs = torch.normal(
+                        pii_latents.unsqueeze(0), sigma.view(-1, 1, 1)
+                    ).view(-1, self.model.opt.dim_z).to(self.device)
 
-                gen_batch = self.vocab.decode_batch(seq_batch)
+                    seq_batch = self.model.generate(same_zs, self.max_len)
 
-                passwords = (password for password in gen_batch)
+                    gen_batch = self.vocab.decode_batch(seq_batch)
 
-                dump(passwords, self.samples_file, self.stdout)
+                    passwords = (password for password in gen_batch)
 
-                #logging(
-                #    self.log_file,
-                #    f"| batch {i + 1:2d}/{len(self.pii_dataloader)} "
-                #    f"| len {length:2d} "
-                #)
+                    dump(passwords, self.samples_file, self.stdout)
 
+                    pbar.n += same_zs.size(0)
+                    pbar.refresh()
+                    
+                    #logging(
+                    #    self.log_file,
+                    #    f"| batch {i + 1:2d}/{len(self.pii_dataloader)} "
+                    #    f"| len {length:2d} "
+                    #)
+
+                bbar.n = i + 1
+                bbar.refresh()
 
         logging(
             self.log_file,
