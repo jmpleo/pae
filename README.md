@@ -21,7 +21,7 @@ pipenv run python3 sample.py --pii=/path/to/personal_ident_info.txt --stdout
 or
 
 ```bash
-docker run --rm jmpleo/pae --stdout </path/to/personal_ident_info.txt
+docker run -i --rm jmpleo/pae --stdout </path/to/personal_ident_info.txt
 ```
 
 ### see more
