@@ -179,11 +179,11 @@ def main():
             #'max_len': 8,
             'batch_size': 4096,
             'repo_id': 'jmpleo/pae',
-            'load_model': 'v1/rand-10-12-14-30000k/laae-0.01/model.pt',
+            'load_model': 'v3/8-laae-19_12_2024/model.pt',
             'pii': None,
             'wordlist_first': None,
             'sigmas_n': 50,
-            'sigma_min': 0.001,
+            'sigma_min': 0.01,
             'sigma_max': 0.3,
             'save_dir': 'samples'
         }
