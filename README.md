@@ -24,6 +24,14 @@ or
 docker run -i --rm jmpleo/pae --stdout </path/to/personal_ident_info.txt
 ```
 
+with hashcat
+
+```bash
+docker run -i --rm jmpleo/pae < /path/to/personal_ident_info.txt --stdout | hashcat -m 0 -a 0 --potfile-disable /path/to/hashes_list.txt
+```
+
+
+
 ### see more
 
 ```
