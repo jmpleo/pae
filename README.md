@@ -1,17 +1,31 @@
 # Password AutoEncoders
 
 
-## Using
+## Using local
 
 ```bash
 pipenv install
 ```
+or docker (see: https://hub.docker.com/r/jmpleo/pae)
+
+```bash
+docker pull jmpleo/pae
+```
+
 ### simple inference
+
 ```bash
 pipenv run python3 sample.py --pii=/path/to/personal_ident_info.txt --stdout
 ```
 
+or
+
+```bash
+docker run --rm jmpleo/pae --stdout </path/to/personal_ident_info.txt
+```
+
 ### see more
+
 ```
 usage: sample.py [-h] [--method M] [--wordlist_first FILE] [--log_file FILE] [--save_dir DIR] [--load_model PATH] [--repo_id REPO]
                  [--local] [--batch_size B] [--sigmas_n N] [--sigma_min SMIN] [--sigma_max SMAX] [--pii FILE|DIR] [--stdout] [--cuda]

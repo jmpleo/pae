@@ -55,7 +55,7 @@ class SessionPAE:
         ## device setup
         ############################################################################
         self.device = torch.device("cuda" if cuda and torch.cuda.is_available() else "cpu")
-        
+
         logging(log_file, f"# powered on {self.device}")
 
         arch = {
@@ -136,7 +136,7 @@ class SessionPAE:
             with open(self.wordlist, 'r', encoding="utf-8") as wordlist:
                 dump((word[:-1] for word in wordlist), self.samples_file, self.stdout)
 
-        
+
         logging(
             self.log_file,
             f"# generation of {self.limit_passwords} passwords has been started"
@@ -145,25 +145,25 @@ class SessionPAE:
         sigmas = torch.linspace(self.sigma_min, self.sigma_max, self.sigmas_n).to(self.device)
 
         with tqdm(
-                total=self.limit_passwords, desc='passwords', unit='password', leave=False, 
+                total=self.limit_passwords, desc='passwords', unit='password', leave=False,
                 bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt} - {rate_fmt}'
-            ) as pbar, tqdm(      
-                total=len(self.pii_dataloader), desc='batches', unit='batch', leave=False, 
+            ) as pbar, tqdm(
+                total=len(self.pii_dataloader), desc='batches', unit='batch', leave=False,
                 bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt}'
             ) as bbar:
 
             #for i, passwords_batch in enumerate(tqdm(self.pii_dataloader, desc="batches", unit="batch")):
             for i, passwords_batch in enumerate(self.pii_dataloader):
-        
+
                 inputs, _ = self.vocab.encode_batch(device=self.device, lines=passwords_batch)
                 inputs = inputs.t().contiguous()
 
                 # [batch_size, dim_z]
                 pii_latents = reparameterize(*self.model.encode(inputs))
-                
+
                 # TODO: deprecate len choise
                 # for length in range(self.min_len, self.max_len + 1): #, desc="Generating lengths", unit="length", leave=False):
-        
+
                 #for sigma in tqdm(torch.split(sigmas, self.batch_size // len(pii_latents)), desc="sigmas", unit="sigma", leave=False):
                 for sigma in torch.split(sigmas, self.batch_size // len(pii_latents)):
 
@@ -181,7 +181,7 @@ class SessionPAE:
 
                     pbar.n += same_zs.size(0)
                     pbar.refresh()
-                    
+
                     #logging(
                     #    self.log_file,
                     #    f"| batch {i + 1:2d}/{len(self.pii_dataloader)} "
